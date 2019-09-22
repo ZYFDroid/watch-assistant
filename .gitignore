@@ -1,0 +1,11 @@
+phone/.gradle
+phone/.idea
+phone/app/debug
+phone/app/build
+
+watch/.gradle
+watch/.idea
+watch/app/debug
+watch/app/build
+
+*.iml

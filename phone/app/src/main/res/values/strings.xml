@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">手表通知</string>
+    <string name="tips">请将此软件加入后台清理和优化软件的白名单，国产手机可以转到切换任务界面，然后点击此APP卡片上方的锁图标（表示保持此应用后台运行）。可以通过手表检测后台是否运行（连接、断开连接会在手表上有提示）</string>
+</resources>
