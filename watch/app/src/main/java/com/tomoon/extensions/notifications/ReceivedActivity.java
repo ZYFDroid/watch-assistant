@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.text.method.DateTimeKeyListener;
@@ -30,12 +31,17 @@ public class ReceivedActivity extends Activity {
 
     NotificationAdapter mAdapter = null;
     Vibrator vibrator = null;
+    View mainView;
 
+    int screentimeout=120;
+    Handler hWnd = new Handler();
     VibrationEffect efft;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_received);
+        mainView .setKeepScreenOn(true);
+        mainView = findViewById(R.id.mainView);
         mAdapter=new NotificationAdapter();
         vibrator=(Vibrator)this.getSystemService(this.VIBRATOR_SERVICE);
         ((ListView)findViewById(R.id.listMessage)).setAdapter(mAdapter);
@@ -44,12 +50,20 @@ public class ReceivedActivity extends Activity {
         filter.setPriority(5);
         registerReceiver(mInActivityReceiver,filter);
 
+        hWnd.postDelayed(timeOutRunnable,1000);
     }
-
+    Runnable timeOutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            screentimeout--;
+            mainView.setKeepScreenOn(screentimeout>=0);
+            hWnd.postDelayed(this,1000);
+        }
+    };
     @Override
     protected void onResume() {
         super.onResume();
-
+        screentimeout=120;
     }
 
     BroadcastReceiver mInActivityReceiver = new BroadcastReceiver() {
@@ -59,6 +73,7 @@ public class ReceivedActivity extends Activity {
             abortBroadcast();
             ReceivedReceiver.wakeUpAndUnlock(ReceivedActivity.this);
             setTopApp();
+            screentimeout=120;
         }
     };
 
