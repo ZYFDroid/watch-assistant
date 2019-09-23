@@ -8,4 +8,15 @@ watch/.idea
 watch/app/debug
 watch/app/build
 
+bluessh/BlueSSHD/.gradle
+bluessh/BlueSSHD/.idea
+bluessh/BlueSSHD/app/debug
+bluessh/BlueSSHD/app/build
+
+
+bluessh/BlueSSH/.gradle
+bluessh/BlueSSH/.idea
+bluessh/BlueSSH/app/debug
+bluessh/BlueSSH/app/build
+
 *.iml
