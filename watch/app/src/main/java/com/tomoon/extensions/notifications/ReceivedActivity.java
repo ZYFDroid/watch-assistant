@@ -40,8 +40,9 @@ public class ReceivedActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_received);
-        mainView .setKeepScreenOn(true);
+
         mainView = findViewById(R.id.mainView);
+        mainView.setKeepScreenOn(true);
         mAdapter=new NotificationAdapter();
         vibrator=(Vibrator)this.getSystemService(this.VIBRATOR_SERVICE);
         ((ListView)findViewById(R.id.listMessage)).setAdapter(mAdapter);

@@ -16,11 +16,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+
 import androidx.core.app.NotificationCompat;
 
-import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -28,8 +26,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -126,28 +124,16 @@ public class NotificationService extends NotificationListenerService {
             jobj.put("app", app);
             jobj.put("title", title);
             jobj.put("content", content);
-            String msg = Base64.encodeToString(jobj.toString().getBytes("UTF-8"), Base64.URL_SAFE);
+            JSONObject rootObj = new JSONObject();
+            rootObj.put(ConstantUtil.TAG_ACTION,ConstantUtil.ACTION_NOTIFICATION);
+            rootObj.put(ConstantUtil.TAG_DATA,jobj);
 
             try {
-                printStream.print(msg);
-                printStream.print(";");
-                //Log.e("==SENDEDNOTIFICATION",title+":"+content);
+                printStream.print(CodecUtils.encodeAsPacket(rootObj));
             } catch (Exception ex) {
                 ex.printStackTrace();
-                toastMessage("无法连接到手表");
-                printStream = null;
-                failCount++;
-                if (failCount > 20) {
-                    failCount = 0;
-                    toastMessage("真的无法连接到手表，服务关闭");
-                    stopSelf();
-                    return;
-                }
-                new ConnectThread().start();
             }
         } catch (JSONException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
     }
@@ -204,7 +190,8 @@ public class NotificationService extends NotificationListenerService {
                     socket = device.createInsecureRfcommSocketToServiceRecord(MainActivity.BtPort);
                     socket.connect();
                     printStream = new PrintStream(socket.getOutputStream());
-                    new StatusThread(socket).start();
+                    receiveThread = new ReceiveThread(socket);
+                    receiveThread.start();
                 } catch (IOException e) {
                     toastMessage("无法连接到手表");
                     stopSelf();
@@ -218,20 +205,40 @@ public class NotificationService extends NotificationListenerService {
         }
     }
 
-    class StatusThread extends  Thread{
+    ReceiveThread receiveThread;
+
+    class ReceiveThread extends  Thread{
         BluetoothSocket socket;
 
-        public StatusThread(BluetoothSocket socket) {
+        public ReceiveThread(BluetoothSocket socket) {
             this.socket = socket;
         }
 
         @Override
         public void run() {
             try {
-                byte[] buffer = new byte[1024];
+                InputStreamReader reader = new InputStreamReader(socket.getInputStream());
+                StringBuffer strbuf =new StringBuffer();
+                char[] buffer = new char[2048];
                 while (true) {
-                    socket.getInputStream().read(buffer);
-                    Thread.sleep(5000);
+
+                    int len=reader.read(buffer);
+                    String message;
+
+                    for(int i=0;i<len;i++){
+                        if(buffer[i]==';'){
+                            message=strbuf.toString();
+                            try {
+                                dataArrival(CodecUtils.decodeFromPacket(message));
+                            }catch (JSONException jex){
+                                jex.printStackTrace();
+                            }
+                            strbuf.delete(0,strbuf.length());
+                        }
+                        else{
+                            strbuf.append(buffer[i]);
+                        }
+                    }
                 }
             }catch (Exception ex){
                 ex.printStackTrace();
@@ -261,7 +268,6 @@ public class NotificationService extends NotificationListenerService {
 
     public boolean isUserStop=false;
 
-
     public static void loadConfiguration(Context $this){
         blockedAppList.clear();
         blockedKeywordList.clear();
@@ -277,7 +283,6 @@ public class NotificationService extends NotificationListenerService {
             blockedAppList.addAll(apps);
         }
     }
-
 
     public void postNotification(){
 
@@ -314,5 +319,9 @@ public class NotificationService extends NotificationListenerService {
             Log.e("TMSEND","TRYSEND");
             notificationManager.notify(1,notification);
         }catch (NullPointerException ex){ex.printStackTrace();}
+    }
+
+    public void dataArrival(JSONObject jobj){
+        //TODO: Implement this method
     }
 }

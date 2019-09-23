@@ -9,26 +9,22 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Vibrator;
-import android.util.Base64;
 import android.util.Log;
-import android.widget.BaseAdapter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.Scanner;
 import java.util.UUID;
 
 public class ReceiverService extends Service {
 
     public static UUID BtPort = UUID.fromString("c3d3cd23-e209-c3ca-aabd-30addc000000");
     Vibrator vibrator = null;
-    long[] defaultPattern={0,200,400,200};
+    long[] defaultPattern={0,100,200,100};
     public static ReceiverService mInstance =null;
 
     @Override
@@ -103,7 +99,6 @@ public class ReceiverService extends Service {
                 char[] buffer = new char[2048];
                 String message=null;
 
-                ps.println("200 OK");
                 while (true) {
 
                     int len=reader.read(buffer);
@@ -112,16 +107,24 @@ public class ReceiverService extends Service {
                     for(int i=0;i<len;i++){
                         if(buffer[i]==';'){
                             message=strbuf.toString();
-                            sendRawMessage(message);
-                            ps.println("200 OK");
+                            try {
+                                dataArrival(CodecUtils.decodeFromPacket(message));
+                            }catch (JSONException jex){
+                                try {
+                                    JSONObject jobj = new JSONObject();
+                                    jobj.put("status","500");
+                                    jobj.put("ex",jex.toString());
+                                    ps.print(CodecUtils.encodeAsPacket(jobj));
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
                             strbuf.delete(0,strbuf.length());
                         }
                         else{
                             strbuf.append(buffer[i]);
                         }
                     }
-
-
                 }
             } catch (IOException e) {
                 try {
@@ -129,32 +132,28 @@ public class ReceiverService extends Service {
                 }catch (Exception ex){}
                 e.printStackTrace();
                 sendMessage("手表连接","连接状态","手机断开连接");
+                vibrator.vibrate(1500);
             }
         }
     }
 
-    void sendRawMessage(String message){
-        if(null==message){return;}
-        try {
-            String raw = new String(Base64.decode(message, Base64.URL_SAFE), "UTF-8");
-            JSONObject jobj = new JSONObject(raw);
+    void dataArrival(JSONObject root) throws  JSONException{
+            String status = root.getString(ConstantUtil.TAG_ACTION);
+            if(status.equals(ConstantUtil.ACTION_NOTIFICATION)) {
+                JSONObject jobj = root.getJSONObject(ConstantUtil.TAG_DATA);
+                String title = jobj.getString("title");
+                String cotent = jobj.getString("content");
+                String app = "";
+                if (jobj.has("app")) {
+                    try {
+                        app = jobj.getString("app");
+                    } catch (JSONException jex) {
+                        jex.printStackTrace();
+                    }
+                }
+                hWnd.post(new NewMessagePoster(app, title, cotent));
+            }
 
-            String title = jobj.getString("title");
-            String cotent = jobj.getString("content");
-            String app="";
-            if(jobj.has("app")){
-                try{app=jobj.getString("app");}catch (JSONException jex){
-                    jex.printStackTrace();}
-            }
-            hWnd.post(new NewMessagePoster(app,title, cotent));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            try {
-                Thread.sleep(333);
-            } catch (InterruptedException e) {
-                return;
-            }
-        }
     }
 
     class NewMessagePoster implements  Runnable{
@@ -174,6 +173,7 @@ public class ReceiverService extends Service {
     public void onDestroy() {
         super.onDestroy();
         server.interrupt();
+
         mInstance=null;
     }
 
