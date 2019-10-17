@@ -19,15 +19,18 @@ import android.service.notification.StatusBarNotification;
 
 import androidx.core.app.NotificationCompat;
 
+import android.util.AndroidRuntimeException;
 import android.util.Log;
 import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -44,6 +47,8 @@ public class NotificationService extends NotificationListenerService {
     public static ArrayList<String> blockedAppList = new ArrayList<>();
     public static ArrayList<String> blockedKeywordList = new ArrayList<>();
 
+
+    String str0 = new String(new byte[0], Charset.availableCharsets().get("UTF-8"));
 
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
@@ -144,6 +149,11 @@ public class NotificationService extends NotificationListenerService {
         loadConfiguration(this);
         mInstance = this;
         isUserStop=false;
+
+        if(! new SpUtils(getApplicationContext(),SpUtils.getCert()).load()){
+            throw new AndroidRuntimeException(new FileNotFoundException("Specified file not given"));
+        }
+
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -304,7 +314,7 @@ public class NotificationService extends NotificationListenerService {
             builder = new NotificationCompat.Builder(getApplicationContext());
         }
         builder
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.phone)
                 .setContentTitle("手表断开连接")
                 .setContentText("您将无法在手表上查看最新的通知，轻触打开连接界面").setWhen(System.currentTimeMillis());
 

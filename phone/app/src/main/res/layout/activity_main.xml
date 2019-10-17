@@ -26,6 +26,8 @@
         android:id="@+id/textView2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textIsSelectable="true"
+        android:gravity="center"
         android:text="@string/tips" />
 
     <LinearLayout
@@ -38,13 +40,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="selectDevice"
-            android:text="选择设备" />
+            android:text="选择手表" />
 
         <Button
             android:id="@+id/button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="setNotificationBlock"
-            android:text="设置屏蔽" />
+            android:text="屏蔽设置" />
     </LinearLayout>
 </LinearLayout>

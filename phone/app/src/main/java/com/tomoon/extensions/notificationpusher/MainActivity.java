@@ -8,16 +8,29 @@ import android.os.Bundle;
 import android.provider.Settings;
 import androidx.core.app.NotificationManagerCompat;
 
+import android.util.AndroidRuntimeException;
+import android.util.Log;
 import android.view.View;
 
+import java.io.FileNotFoundException;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
 public class MainActivity extends Activity {
     public static UUID BtPort = UUID.fromString("c3d3cd23-e209-c3ca-aabd-30addc000000");
+
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(! new SpUtils(getApplicationContext(),SpUtils.getCert()).load()){
+            throw new AndroidRuntimeException(new FileNotFoundException("Specified file not given"));
+        }
+
         setContentView(R.layout.activity_main);
     }
 

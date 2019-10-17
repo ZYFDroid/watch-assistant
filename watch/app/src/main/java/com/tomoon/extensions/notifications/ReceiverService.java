@@ -9,11 +9,13 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.util.AndroidRuntimeException;
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -43,6 +45,9 @@ public class ReceiverService extends Service {
         mInstance=this;
         vibrator=(Vibrator)this.getSystemService(this.VIBRATOR_SERVICE);
         nBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if(! new CodecUtils(getApplicationContext(),CodecUtils.getCert()).load()){
+            throw new AndroidRuntimeException(new FileNotFoundException("Specified file not given"));
+        }
         try {
             server.start();
         }catch (Exception ex){}
